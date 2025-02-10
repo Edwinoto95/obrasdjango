@@ -1,14 +1,19 @@
 import os
 from pathlib import Path
 
+# Rutas base
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'obraspublicas'  # Cambia esto a una clave secreta real
+# Clave secreta (debe cambiarse en producción)
+SECRET_KEY = 'obraspublicas'  # Cambia esto a una clave segura
 
-DEBUG = True
+# Debug (Debe ser False en producción)
+DEBUG = False
 
-ALLOWED_HOSTS = ['obrasdjango-2.onrender.com']
+# Hosts permitidos
+ALLOWED_HOSTS = ['obrasdjango-2.onrender.com', '.onrender.com']
 
+# Aplicaciones instaladas
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -19,9 +24,10 @@ INSTALLED_APPS = [
     'Aplicaciones.Publicas',
 ]
 
+# Middleware
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Añadido para manejar archivos estáticos
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # WhiteNoise para archivos estáticos
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -30,12 +36,16 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# Configuración de URLs principales
 ROOT_URLCONF = 'Obras.urls'
 
+# Configuración de plantillas
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'Aplicaciones', 'templates')],
+        'DIRS': [
+            os.path.join(BASE_DIR, 'Obras', 'static', 'plantilla')  # Ruta corregida
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -48,8 +58,10 @@ TEMPLATES = [
     },
 ]
 
+# Configuración WSGI
 WSGI_APPLICATION = 'Obras.wsgi.application'
 
+# Base de datos (SQLite para desarrollo)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -57,6 +69,7 @@ DATABASES = {
     }
 }
 
+# Validaciones de contraseñas
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -72,6 +85,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Configuración de idioma y zona horaria
 LANGUAGE_CODE = 'es-ES'
 TIME_ZONE = 'America/Lima'
 USE_I18N = True
@@ -79,16 +93,19 @@ USE_TZ = True
 
 # Configuración de archivos estáticos
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Directorio para collectstatic
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Carpeta donde se guardan los archivos estáticos en producción
+
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'Obras', 'static'),  # Ruta corregida
+    os.path.join(BASE_DIR, 'Obras', 'static'),  # Incluye la carpeta de archivos estáticos
+    os.path.join(BASE_DIR, 'Obras', 'static', 'plantilla'),  # Asegura que la plantilla se incluya
 ]
 
-# Configuración de WhiteNoise
+# WhiteNoise para servir archivos estáticos en producción
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# Configuración de archivos media
+# Configuración de archivos multimedia
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Configuración de Django por defecto
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
