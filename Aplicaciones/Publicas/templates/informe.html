@@ -1,0 +1,90 @@
+{% extends 'plantilla.html' %}
+{% load static %}
+
+{% block title %}Informe de Obras{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-lg p-4">
+        <h2 class="text-center text-primary">📊 Informe de Obras Públicas</h2>
+        <p class="text-muted text-center">Resumen actualizado de las obras en la plataforma</p>
+
+        <table id="tablaInforme" class="table table-striped table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>🏗 Tipo</th>
+                    <th>📌 Cantidad</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>🔨 Obras en progreso</td>
+                    <td>{{ obras_en_progreso }}</td>
+                </tr>
+                <tr>
+                    <td>✅ Obras finalizadas</td>
+                    <td>{{ obras_finalizadas }}</td>
+                </tr>
+                <tr>
+                    <td>📅 Obras planeadas</td>
+                    <td>{{ obras_planeadas }}</td>
+                </tr>
+                <tr>
+                    <td>💰 Presupuesto total</td>
+                    <td>${{ presupuesto_total }}</td>
+                </tr>
+               
+            </tbody>
+        </table>
+
+        <div class="text-center mt-4">
+            <a href="{% url 'inicio' %}" class="btn btn-secondary">🏠 Volver al Inicio</a>
+            <button onclick="window.print()" class="btn btn-danger">📄 Imprimir PDF</button>
+        </div>
+    </div>
+</div>
+
+  
+<div class="row">
+    <div class="col-md-4">
+        <div class="card text-white bg-warning mb-3">
+            <div class="card-header">🏗️ Obras en progreso</div>
+            <div class="card-body">
+                <h5 class="card-title">{{ obras_en_progreso }}</h5>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-header">✅ Obras finalizadas</div>
+            <div class="card-body">
+                <h5 class="card-title">{{ obras_finalizadas }}</h5>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card text-white bg-info mb-3">
+            <div class="card-header">📅 Obras planeadas</div>
+            <div class="card-body">
+                <h5 class="card-title">{{ obras_planeadas }}</h5>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-header">💰 Presupuesto Total</div>
+            <div class="card-body">
+                <h5 class="card-title">${{ presupuesto_total|floatformat:2 }}</h5>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+
+{% endblock %}

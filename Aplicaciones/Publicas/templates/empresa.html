@@ -1,0 +1,223 @@
+{% extends 'plantilla.html' %}
+{% load static %}
+
+{% block title %}Contratistas{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Mensajes de éxito o error -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                {{ message }}
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Botón de Registro -->
+    <div class="mb-3">
+        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalAgregarConstructor">
+            <i class="fas fa-plus-circle"></i> ➕ Registrar Contratista
+        </button>
+    </div>
+
+    <!-- Modal para Agregar Constructor -->
+    <div class="modal fade" id="modalAgregarConstructor" tabindex="-1" aria-labelledby="modalAgregarConstructorLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalAgregarConstructorLabel">➕ Registrar Nuevo Contratista</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="post" action="{% url 'agregar_constructor' %}" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="nombre_empresa" class="form-label">🏢 Nombre de la Empresa</label>
+                            <input type="text" class="form-control" id="nombre_empresa" name="nombre_empresa" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="especialidad" class="form-label">🏗️ Especialidad</label>
+                            <input type="text" class="form-control" id="especialidad" name="especialidad" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="contacto" class="form-label">📞 Contacto</label>
+                            <input type="text" class="form-control" id="contacto" name="contacto" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_archivo" class="form-label">📂 Subir Evidencia</label>
+                            <input id="id_archivo" name="archivo" type="file" class="file" data-show-upload="false" data-show-caption="true" accept=".jpg,.png,.pdf">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">💾 Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card principal -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="mb-0">👷 Lista de Contratistas</h2>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="tabla-constructores" class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>🏢 Nombre de la Empresa</th>
+                            <th>🏗️ Especialidad</th>
+                            <th>📞 Contacto</th>
+                            <th>📂 Obras Asignadas</th>
+                            <th>📑 Evidencia</th>
+                            <th>⚙ Opciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for constructor in constructores %}
+                            <tr>
+                                <td>{{ constructor.nombre_empresa }}</td>
+                                <td>{{ constructor.especialidad }}</td>
+                                <td>{{ constructor.contacto }}</td>
+                                <td>
+                                    {% if constructor.obras.all %}
+                                        <ul class="list-unstyled mb-0">
+                                            {% for obra in constructor.obras.all %}
+                                                <li>• {{ obra.nombre }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% else %}
+                                        <span class="text-muted">Sin obras asignadas</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if constructor.archivo %}
+                                        {% if constructor.archivo.url|lower|slice:'-4:' == '.jpg' or constructor.archivo.url|lower|slice:'-4:' == '.png' %}
+                                            <img src="{{ constructor.archivo.url }}" alt="Evidencia" class="img-thumbnail" width="100">
+                                        {% else %}
+                                            <a href="{{ constructor.archivo.url }}" target="_blank" class="btn btn-sm btn-info">📄 Ver Archivo</a>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">No adjunto</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-warning btn-sm"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#modalEditarConstructor{{ constructor.pk }}">
+                                            ✏️ Editar
+                                        </button>
+                                        <form method="post" action="{% url 'eliminar_constructor' constructor.pk %}" style="display:inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger btn-sm"
+                                                    onclick="return confirm('¿Estás seguro de que deseas eliminar este contratista?')">
+                                                ❌ Eliminar
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            <!-- Modal de Edición para cada constructor -->
+                            <div class="modal fade" id="modalEditarConstructor{{ constructor.pk }}" tabindex="-1" aria-labelledby="modalEditarConstructorLabel{{ constructor.pk }}" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="modalEditarConstructorLabel{{ constructor.pk }}">✏️ Editar Contratista</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <form method="post" action="{% url 'editar_constructor' constructor.pk %}" enctype="multipart/form-data" class="needs-validation" novalidate>
+                                                {% csrf_token %}
+                                                <div class="mb-3">
+                                                    <label for="nombre_empresa" class="form-label">🏢 Nombre de la Empresa</label>
+                                                    <input type="text" class="form-control" id="nombre_empresa" name="nombre_empresa" value="{{ constructor.nombre_empresa }}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="especialidad" class="form-label">🏗️ Especialidad</label>
+                                                    <input type="text" class="form-control" id="especialidad" name="especialidad" value="{{ constructor.especialidad }}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="contacto" class="form-label">📞 Contacto</label>
+                                                    <input type="text" class="form-control" id="contacto" name="contacto" value="{{ constructor.contacto }}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="id_archivo_editar_{{ constructor.pk }}" class="form-label">📂 Subir Evidencia</label>
+                                                    <input id="id_archivo_editar_{{ constructor.pk }}" name="archivo" type="file" class="file-input" data-show-upload="false" data-show-caption="true" accept=".jpg,.png,.pdf">
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                    <button type="submit" class="btn btn-primary">💾 Guardar Cambios</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts necesarios -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-fileinput/5.1.5/css/fileinput.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-fileinput/5.1.5/js/fileinput.min.js"></script>
+
+<script>
+    // Inicialización de Bootstrap File Input
+    $(document).ready(function() {
+        $("#id_archivo").fileinput({
+            showUpload: false,
+            showCaption: true,
+            allowedFileExtensions: ["jpg", "png", "pdf"],
+            theme: 'fas',
+            browseClass: "btn btn-primary",
+            browseIcon: "<i class='fas fa-folder-open'></i> ",
+            removeClass: "btn btn-danger",
+            removeIcon: "<i class='fas fa-trash'></i> ",
+            previewFileIcon: "<i class='fas fa-file'></i>"
+        });
+
+        // Inicializar FileInput para cada modal de edición
+        {% for constructor in constructores %}
+            $("#id_archivo_editar_{{ constructor.pk }}").fileinput({
+                showUpload: false,
+                showCaption: true,
+                allowedFileExtensions: ["jpg", "png", "pdf"],
+                theme: 'fas',
+                browseClass: "btn btn-primary",
+                browseIcon: "<i class='fas fa-folder-open'></i> ",
+                removeClass: "btn btn-danger",
+                removeIcon: "<i class='fas fa-trash'></i> ",
+                previewFileIcon: "<i class='fas fa-file'></i>"
+            });
+        {% endfor %}
+
+        // Inicialización de DataTables
+        $('#tabla-constructores').DataTable({
+            "language": {
+                "sProcessing": "Procesando...",
+                "sLengthMenu": "Mostrar _MENU_ registros",
+                "sZeroRecords": "No se encontraron resultados",
+                "sEmptyTable": "Ningún dato disponible en esta tabla",
+                "sSearch": "🔍 Buscar:",
+                "oPaginate": {
+                    "sPrevious": "Anterior",
+                    "sNext": "Siguiente"
+                }
+            },
+            "responsive": true,
+            "pageLength": 10,
+            "order": [[0, 'asc']]
+        });
+    });
+</script>
+{% endblock %}

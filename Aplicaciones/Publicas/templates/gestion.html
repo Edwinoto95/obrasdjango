@@ -1,0 +1,110 @@
+{% extends 'plantilla.html' %}
+{% load static %}
+
+{% block title %}Gestión de Obras{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center text-primary">📋 Gestión de Obras Públicas</h2>
+    <p class="text-muted text-center">Administra obras, constructores y presupuestos</p>
+
+    <ul class="nav nav-tabs" id="gestionTabs">
+        <li class="nav-item">
+            <a class="nav-link active" data-bs-toggle="tab" href="#obras">🏗 Obras</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" href="#constructores">👷 Constructores</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" href="#presupuestos">💰 Presupuestos</a>
+        </li>
+    </ul>
+
+    <div class="tab-content mt-3">
+        <div id="obras" class="tab-pane fade show active">
+            <table id="tablaObras" class="table table-striped table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Ubicación</th>
+                        <th>Fecha Inicio</th>
+                        <th>Estado</th>
+                        <th>Presupuesto</th>
+                        <th>Constructor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for obra in obras %}
+                    <tr>
+                        <td>{{ obra.nombre }}</td>
+                        <td>{{ obra.ubicacion }}</td>
+                        <td>{{ obra.fecha_inicio }}</td>
+                        <td>{{ obra.get_estado_display }}</td>
+                        <td>${{ obra.presupuesto_asignado }}</td>
+                        <td>{{ obra.constructor.nombre_empresa }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div id="constructores" class="tab-pane fade">
+            <table id="tablaConstructores" class="table table-striped table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Empresa</th>
+                        <th>Especialidad</th>
+                        <th>Contacto</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for constructor in constructores %}
+                    <tr>
+                        <td>{{ constructor.nombre_empresa }}</td>
+                        <td>{{ constructor.especialidad }}</td>
+                        <td>{{ constructor.contacto }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div id="presupuestos" class="tab-pane fade">
+            <table id="tablaPresupuestos" class="table table-striped table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Obra</th>
+                        <th>Monto Asignado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for presupuesto in presupuestos %}
+                    <tr>
+                        <td>{{ presupuesto.obra.nombre }}</td>
+                        <td>${{ presupuesto.monto_asignado }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <button onclick="window.print()" class="btn btn-danger">📄 Imprimir PDF</button>
+        <button id="exportExcel" class="btn btn-success">📊 Exportar a Excel</button>
+    </div>
+</div>
+
+<script>
+    document.getElementById("exportExcel").addEventListener("click", function() {
+        let table = document.getElementById("tablaObras");
+        let wb = XLSX.utils.table_to_book(table, {sheet: "Obras"});
+        XLSX.writeFile(wb, "gestion_obras.xlsx");
+    });
+
+    $(document).ready(function() {
+        $("#tablaObras, #tablaConstructores, #tablaPresupuestos").DataTable();
+    });
+</script>
+
+{% endblock %}

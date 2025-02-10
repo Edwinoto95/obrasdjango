@@ -1,0 +1,242 @@
+{% extends 'plantilla.html' %}
+{% load static %}
+
+{% block title %}Gestión de Presupuestos{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Spinner de carga global -->
+    <div id="globalLoadingSpinner" class="position-fixed top-50 start-50 translate-middle d-none">
+        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+        <div class="mt-2">Procesando solicitud...</div>
+    </div>
+
+    <!-- Mensajes del sistema -->
+    <div id="systemMessages">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <button type="button" class="btn btn-success d-flex align-items-center gap-2"
+                    data-bs-toggle="modal" data-bs-target="#modalAgregarPresupuesto">
+                <i class="fas fa-plus-circle"></i>
+                <span>Asignar Nuevo Presupuesto</span>
+            </button>
+        </div>
+        <div class="col-md-6 text-end">
+            <button type="button" class="btn btn-primary d-flex align-items-center gap-2 ms-auto"
+                    onclick="generarReporte()">
+                <i class="fas fa-download"></i>
+                <span>Descargar Reporte de Gastos</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabla de Presupuestos -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h2 class="card-title h5 mb-0 d-flex align-items-center gap-2">
+                <i class="fas fa-money-bill-wave text-success"></i>
+                Lista de Presupuestos
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="tabla-presupuestos" class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Obra</th>
+                            <th>Monto Asignado</th>
+                            <th>Fecha Asignación</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for presupuesto in presupuestos %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="fas fa-building text-secondary"></i>
+                                        {{ presupuesto.obra.nombre }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">
+                                        ${{ presupuesto.monto_asignado|floatformat:2 }}
+                                    </span>
+                                </td>
+                                <td>{{ presupuesto.fecha_asignacion|date:"d/m/Y" }}</td>
+                                <td>
+                                    {% if presupuesto.estado == 'vigente' %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check-circle me-1"></i>Vigente
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-warning">
+                                            <i class="fas fa-clock me-1"></i>En Revisión
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-warning btn-sm"
+                                                data-bs-toggle="modal" data-bs-target="#modalEditarPresupuesto{{ presupuesto.id }}"
+                                                title="Modificar presupuesto">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-info btn-sm"
+                                                onclick="verDetalles('{{ presupuesto.id }}')"
+                                                title="Ver detalles">
+                                            <i class="fas fa-clipboard-list"></i>
+                                        </button>
+                                        <form action="{% url 'eliminar_presupuesto' presupuesto.id %}" method="post" class="d-inline-block">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger btn-sm" title="Eliminar presupuesto">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Modal Editar Presupuesto -->
+                            <div class="modal fade" id="modalEditarPresupuesto{{ presupuesto.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title d-flex align-items-center gap-2">
+                                                <i class="fas fa-edit text-warning"></i>
+                                                Editar Presupuesto
+                                            </h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <form method="post" action="{% url 'editar_presupuesto' presupuesto.id %}">
+                                            {% csrf_token %}
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label for="edit_obra" class="form-label">Obra</label>
+                                                    <select name="obra" id="edit_obra" class="form-select" required>
+                                                        <option value="">Seleccione una obra</option>
+                                                        {% for obra in obras %}
+                                                            <option value="{{ obra.id }}" {% if obra.id == presupuesto.obra.id %}selected{% endif %}>
+                                                                {{ obra.nombre }} - {{ obra.ubicacion }}
+                                                            </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="edit_monto_asignado" class="form-label">Monto Asignado ($)</label>
+                                                    <div class="input-group">
+                                                        <span class="input-group-text">$</span>
+                                                        <input type="number" name="monto_asignado" id="edit_monto_asignado"
+                                                               class="form-control" step="0.01" min="0" required value="{{ presupuesto.monto_asignado }}">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                    <i class="fas fa-times me-2"></i>Cancelar
+                                                </button>
+                                                <button type="submit" class="btn btn-primary">
+                                                    <span class="spinner-border spinner-border-sm d-none me-2" role="status"></span>
+                                                    <i class="fas fa-save me-2"></i>Guardar Cambios
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Agregar Presupuesto -->
+    <div class="modal fade" id="modalAgregarPresupuesto" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title d-flex align-items-center gap-2">
+                        <i class="fas fa-plus-circle text-success"></i>
+                        Asignar Nuevo Presupuesto
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="formAgregarPresupuesto" method="post" action="{% url 'asignar_presupuesto' %}">
+                    <div class="modal-body">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="id_obra" class="form-label">Obra</label>
+                            <select name="obra" id="id_obra" class="form-select" required>
+                                <option value="">Seleccione una obra</option>
+                                <!-- Options will be dynamically populated here -->
+                            </select>
+                            <div class="invalid-feedback"></div>
+                            <small class="form-text text-muted obra-info"></small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_monto_asignado" class="form-label">Monto Asignado ($)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" name="monto_asignado" id="id_monto_asignado"
+                                       class="form-control" step="0.01" min="0" required>
+                            </div>
+                            <div class="invalid-feedback"></div>
+                            <small class="form-text text-muted presupuesto-info"></small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <span class="spinner-border spinner-border-sm d-none me-2" role="status"></span>
+                            <i class="fas fa-save me-2"></i>Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const obrasData = localStorage.getItem('obras');
+        let obras = [];
+
+        if (obrasData) {
+            try {
+                obras = JSON.parse(obrasData);
+            } catch (error) {
+                console.error('Error parsing obras from localStorage:', error);
+            }
+        }
+
+        const obraSelect = document.getElementById('id_obra');
+        if (obraSelect && obras.length > 0) {
+            obras.forEach(obra => {
+                const option = document.createElement('option');
+                option.value = obra.id;
+                option.textContent = `${obra.nombre} - ${obra.ubicacion}`;
+                obraSelect.appendChild(option);
+            });
+        } else {
+            console.warn('Obra select element not found or no obras data available.');
+        }
+    });
+</script>
+{% endblock %}
