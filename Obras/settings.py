@@ -88,12 +88,3 @@ import os
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587  # Usa TLS en lugar de SSL
-EMAIL_USE_TLS = True
-EMAIL_USE_SSL = False  # Debe ser False si usas TLS
-EMAIL_HOST_USER = 'edwin.oto8669@utc.edu.ec'
-EMAIL_HOST_PASSWORD = 'sdrm kogs dldr zovs'  # Usa una contraseña de aplicación
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-EMAIL_TIMEOUT = 30
